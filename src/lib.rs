@@ -47,6 +47,10 @@ impl<'a, 'r> FromRequest<'a, 'r> for ClientAddr {
                 if values.len() < 1 {
                     let values: Vec<_> = request.headers().get("x-forwarded-for").collect();
 
+                    if values.len() < 1 {
+                        return Outcome::Forward(());
+                    }
+
                     let value = values[0];
 
                     return match value.parse::<IpAddr>() {
