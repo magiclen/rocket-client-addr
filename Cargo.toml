@@ -1,0 +1,14 @@
+[package]
+name = "rocket-client-addr"
+version = "0.1.0"
+authors = ["Magic Len <len@magiclen.org>"]
+repository = "https://github.com/magiclen/rocket-client-addr"
+homepage = "https://magiclen.org/rocket-client-addr"
+keywords = ["rocket", "server", "web", "ip", "http"]
+categories = ["parsing"]
+description= "This crate provides a request guard used for getting an IP address from a client."
+readme = "README.md"
+license = "MIT"
+
+[dependencies]
+rocket = "0.3.15"
