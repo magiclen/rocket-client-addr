@@ -105,7 +105,7 @@ impl ClientAddr {
         }
     }
 
-    /// Get a ipv4 string.
+    /// Get an IPv4 string.
     pub fn get_ipv4_string(&self) -> Option<String> {
         match &self.ip {
             IpAddr::V4(ipv4) => {
@@ -129,7 +129,7 @@ impl ClientAddr {
         }
     }
 
-    /// Get a ipv6 string.
+    /// Get an IPv6 string.
     pub fn get_ipv6_string(&self) -> String {
         match &self.ip {
             IpAddr::V4(ipv4) => {

@@ -1,6 +1,6 @@
 [package]
 name = "rocket-client-addr"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Magic Len <len@magiclen.org>"]
 repository = "https://github.com/magiclen/rocket-client-addr"
 homepage = "https://magiclen.org/rocket-client-addr"
