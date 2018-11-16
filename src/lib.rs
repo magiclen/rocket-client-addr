@@ -16,6 +16,7 @@ use rocket::Outcome;
 use rocket::request::{self, Request, FromRequest};
 
 /// The request guard used for getting an IP address from a client.
+#[derive(Debug, Clone)]
 pub struct ClientAddr {
     /// IP address from a client.
     pub ip: IpAddr
