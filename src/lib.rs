@@ -22,6 +22,7 @@ pub struct ClientAddr {
     pub ip: IpAddr
 }
 
+#[inline]
 fn is_local_ip(addr: &IpAddr) -> bool {
     match addr {
         IpAddr::V4(addr) => {
@@ -39,56 +40,85 @@ fn is_local_ip(addr: &IpAddr) -> bool {
     }
 }
 
+macro_rules! impl_request_guard {
+    ($request:ident) => {
+        {
+            let (remote_ip, ok) = match $request.remote() {
+                Some(addr) => {
+                    let ip = addr.ip();
+
+                    let ok = !is_local_ip(&ip);
+
+                    (Some(ip), ok)
+                }
+                None => {
+                    (None, false)
+                }
+            };
+
+            if ok {
+                match remote_ip {
+                    Some(ip) => Some(ClientAddr {
+                        ip
+                    }),
+                    None => None
+                }
+            } else {
+                let real_ip: Option<&str> = $request.headers().get("x-real-ip").next(); // Only fetch the first one.
+
+                match real_ip {
+                    Some(real_ip) => match real_ip.parse::<IpAddr>() {
+                        Ok(ip) => Some(ClientAddr {
+                            ip
+                        }),
+                        Err(_) => None
+                    },
+                    None => {
+                        let forwarded_for_ip: Option<&str> = $request.headers().get("x-forwarded-for").next(); // Only fetch the first one.
+
+                        match forwarded_for_ip {
+                            Some(forwarded_for_ip) => match forwarded_for_ip.parse::<IpAddr>() {
+                                Ok(ip) => Some(ClientAddr {
+                                    ip
+                                }),
+                                Err(_) => None
+                            },
+                            None => {
+                                match remote_ip {
+                                    Some(ip) => Some(ClientAddr {
+                                        ip
+                                    }),
+                                    None => None
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 impl<'a, 'r> FromRequest<'a, 'r> for ClientAddr {
     type Error = ();
 
     fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
-        let remote_ip = match request.remote() {
-            Some(addr) => {
-                let ip = addr.ip();
+        match impl_request_guard!(request) {
+            Some(client_addr) => Outcome::Success(client_addr),
+            None => Outcome::Forward(())
+        }
+    }
+}
 
-                if !is_local_ip(&ip) {
-                    return Outcome::Success(ClientAddr { ip });
-                }
+impl<'a, 'r> FromRequest<'a, 'r> for &'a ClientAddr {
+    type Error = ();
 
-                Some(ip)
-            }
-            None => {
-                None
-            }
-        };
+    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
+        let cache: &Option<ClientAddr> = request.local_cache(|| impl_request_guard!(request));
 
-        let real_ip: Option<&str> = request.headers().get("x-real-ip").next(); // Only fetch the first one.
-
-        match real_ip {
-            Some(real_ip) => {
-                match real_ip.parse::<IpAddr>() {
-                    Ok(ip) => {
-                        Outcome::Success(ClientAddr { ip })
-                    }
-                    Err(_) => Outcome::Forward(())
-                }
-            }
-            None => {
-                let forwarded_for_ip: Option<&str> = request.headers().get("x-forwarded-for").next(); // Only fetch the first one.
-
-                match forwarded_for_ip {
-                    Some(forwarded_for_ip) => {
-                        match forwarded_for_ip.parse::<IpAddr>() {
-                            Ok(ip) => {
-                                Outcome::Success(ClientAddr { ip })
-                            }
-                            Err(_) => Outcome::Forward(())
-                        }
-                    }
-                    None => {
-                        match remote_ip {
-                            Some(ip) => Outcome::Success(ClientAddr { ip }),
-                            None => Outcome::Forward(())
-                        }
-                    }
-                }
-            }
+        match cache.as_ref() {
+            Some(client_addr) => Outcome::Success(client_addr),
+            None => Outcome::Forward(())
         }
     }
 }
