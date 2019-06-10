@@ -25,7 +25,7 @@ macro_rules! impl_request_guard {
                             let forwarded_for_ip = forwarded_for_ip.split(",").next(); // Only fetch the first one.
 
                             match forwarded_for_ip {
-                                Some(forwarded_for_ip) => match forwarded_for_ip.parse::<IpAddr>() {
+                                Some(forwarded_for_ip) => match forwarded_for_ip.trim().parse::<IpAddr>() {
                                     Ok(ip) => Some(ClientRealAddr {
                                         ip
                                     }),

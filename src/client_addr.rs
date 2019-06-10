@@ -61,7 +61,7 @@ macro_rules! impl_request_guard {
                         let mut last_ip = None;
 
                         for forwarded_for_ip in forwarded_for_ips {
-                            match forwarded_for_ip.parse::<IpAddr>() {
+                            match forwarded_for_ip.trim().parse::<IpAddr>() {
                                 Ok(ip) => {
                                     if is_local_ip(&ip) {
                                         last_ip = Some(ip);
