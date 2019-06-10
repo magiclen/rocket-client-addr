@@ -1,7 +1,7 @@
 /*!
 # Client's IP Address Request Guard for Rocket Framework
 
-This crate provides a request guard used for getting an IP address from a client.
+This crate provides two request guards used for getting an IP address from a client.
 
 See `examples`.
 */
