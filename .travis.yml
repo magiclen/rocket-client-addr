@@ -13,7 +13,10 @@ matrix:
     - rust: nightly
       os: linux
       env: TARGET=x86_64-unknown-linux-musl
-      install: rustup target add $TARGET
+      install:
+        - sudo apt update
+        - sudo apt install musl-tools
+        - rustup target add $TARGET
       script: cargo test --target $TARGET
     - rust: nightly
       os: windows
