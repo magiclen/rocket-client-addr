@@ -1,13 +1,13 @@
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
+use crate::rocket::request::{self, FromRequest, Request};
 use crate::rocket::Outcome;
-use crate::rocket::request::{self, Request, FromRequest};
 
 /// The request guard used for getting an IP address from a client.
 #[derive(Debug, Clone)]
 pub struct ClientRealAddr {
     /// IP address from a client.
-    pub ip: IpAddr
+    pub ip: IpAddr,
 }
 
 macro_rules! impl_request_guard {
@@ -63,7 +63,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for ClientRealAddr {
     fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
         match impl_request_guard!(request) {
             Some(client_addr) => Outcome::Success(client_addr),
-            None => Outcome::Forward(())
+            None => Outcome::Forward(()),
         }
     }
 }
@@ -76,7 +76,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for &'a ClientRealAddr {
 
         match cache.as_ref() {
             Some(client_addr) => Outcome::Success(client_addr),
-            None => Outcome::Forward(())
+            None => Outcome::Forward(()),
         }
     }
 }
@@ -85,48 +85,32 @@ impl ClientRealAddr {
     /// Get an `Ipv4Addr` instance.
     pub fn get_ipv4(&self) -> Option<Ipv4Addr> {
         match &self.ip {
-            IpAddr::V4(ipv4) => {
-                Some(ipv4.clone())
-            }
-            IpAddr::V6(ipv6) => {
-                ipv6.to_ipv4()
-            }
+            IpAddr::V4(ipv4) => Some(*ipv4),
+            IpAddr::V6(ipv6) => ipv6.to_ipv4(),
         }
     }
 
     /// Get an IPv4 string.
     pub fn get_ipv4_string(&self) -> Option<String> {
         match &self.ip {
-            IpAddr::V4(ipv4) => {
-                Some(ipv4.to_string())
-            }
-            IpAddr::V6(ipv6) => {
-                ipv6.to_ipv4().map(|ipv6| ipv6.to_string())
-            }
+            IpAddr::V4(ipv4) => Some(ipv4.to_string()),
+            IpAddr::V6(ipv6) => ipv6.to_ipv4().map(|ipv6| ipv6.to_string()),
         }
     }
 
     /// Get an `Ipv6Addr` instance.
     pub fn get_ipv6(&self) -> Ipv6Addr {
         match &self.ip {
-            IpAddr::V4(ipv4) => {
-                ipv4.to_ipv6_mapped()
-            }
-            IpAddr::V6(ipv6) => {
-                ipv6.clone()
-            }
+            IpAddr::V4(ipv4) => ipv4.to_ipv6_mapped(),
+            IpAddr::V6(ipv6) => *ipv6,
         }
     }
 
     /// Get an IPv6 string.
     pub fn get_ipv6_string(&self) -> String {
         match &self.ip {
-            IpAddr::V4(ipv4) => {
-                ipv4.to_ipv6_mapped().to_string()
-            }
-            IpAddr::V6(ipv6) => {
-                ipv6.to_string()
-            }
+            IpAddr::V4(ipv4) => ipv4.to_ipv6_mapped().to_string(),
+            IpAddr::V6(ipv6) => ipv6.to_string(),
         }
     }
 }

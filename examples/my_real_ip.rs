@@ -18,8 +18,5 @@ fn ipv6(client_addr: &ClientRealAddr) -> String {
 }
 
 fn main() {
-    rocket::ignite()
-        .mount("/", routes![ipv4])
-        .mount("/", routes![ipv6])
-        .launch();
+    rocket::ignite().mount("/", routes![ipv4]).mount("/", routes![ipv6]).launch();
 }
