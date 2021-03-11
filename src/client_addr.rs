@@ -95,12 +95,9 @@ macro_rules! impl_request_guard {
                                 Some(real_ip) => Some(ClientAddr {
                                     ip: real_ip
                                 }),
-                                None => match remote_ip {
-                                    Some(ip) => Some(ClientAddr {
-                                        ip
-                                    }),
-                                    None => None
-                                }
+                                None => remote_ip.map(|ip| ClientAddr {
+                                    ip
+                                })
                             }
                         }
                     },
@@ -109,12 +106,9 @@ macro_rules! impl_request_guard {
                             Some(real_ip) => Some(ClientAddr {
                                 ip: real_ip
                             }),
-                            None => match remote_ip {
-                                Some(ip) => Some(ClientAddr {
-                                    ip
-                                }),
-                                None => None
-                            }
+                            None => remote_ip.map(|ip| ClientAddr {
+                                ip
+                            })
                         }
                     }
                 }

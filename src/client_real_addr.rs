@@ -29,27 +29,18 @@ macro_rules! impl_request_guard {
                                     Ok(ip) => Some(ClientRealAddr {
                                         ip
                                     }),
-                                    Err(_) => match $request.remote() {
-                                        Some(addr) => Some(ClientRealAddr {
-                                            ip: addr.ip()
-                                        }),
-                                        None => None
-                                    }
-                                },
-                                None => match $request.remote() {
-                                    Some(addr) => Some(ClientRealAddr {
+                                    Err(_) => $request.remote().map(|addr| ClientRealAddr {
                                         ip: addr.ip()
-                                    }),
-                                    None => None
-                                }
+                                    })
+                                },
+                                None => $request.remote().map(|addr| ClientRealAddr {
+                                    ip: addr.ip()
+                                })
                             }
                         }
-                        None => match $request.remote() {
-                            Some(addr) => Some(ClientRealAddr {
-                                ip: addr.ip()
-                            }),
-                            None => None
-                        }
+                        None => $request.remote().map(|addr| ClientRealAddr {
+                            ip: addr.ip()
+                        })
                     }
                 }
             }
