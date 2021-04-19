@@ -1,5 +1,3 @@
-#![feature(proc_macro_hygiene, decl_macro)]
-
 #[macro_use]
 extern crate rocket;
 
@@ -17,6 +15,7 @@ fn ipv6(client_addr: &ClientAddr) -> String {
     client_addr.get_ipv6_string()
 }
 
-fn main() {
-    rocket::ignite().mount("/", routes![ipv4]).mount("/", routes![ipv6]).launch();
+#[launch]
+fn rocket() -> _ {
+    rocket::build().mount("/", routes![ipv4]).mount("/", routes![ipv6])
 }

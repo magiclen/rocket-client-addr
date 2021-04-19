@@ -1,7 +1,7 @@
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, Ipv6MulticastScope};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
+use crate::rocket::outcome::Outcome;
 use crate::rocket::request::{self, FromRequest, Request};
-use crate::rocket::Outcome;
 
 /// The request guard used for getting an IP address from a client.
 #[derive(Debug, Clone)]
@@ -10,30 +10,61 @@ pub struct ClientAddr {
     pub ip: IpAddr,
 }
 
-#[inline]
 fn is_local_ip(addr: &IpAddr) -> bool {
     match addr {
         IpAddr::V4(addr) => {
-            addr.is_private()
-                || addr.is_loopback()
-                || addr.is_link_local()
-                || addr.is_broadcast()
-                || addr.is_documentation()
-                || addr.is_unspecified()
+            let octets = addr.octets();
+
+            match octets {
+                // --- is_private ---
+                [10, ..] => true,
+                [172, b, ..] if (16..=31).contains(&b) => true,
+                [192, 168, ..] => true,
+                // --- is_loopback ---
+                [127, ..] => true,
+                // --- is_link_local ---
+                [169, 254, ..] => true,
+                // --- is_broadcast ---
+                [255, 255, 255, 255] => true,
+                // --- is_documentation ---
+                [192, 0, 2, _] => true,
+                [198, 51, 100, _] => true,
+                [203, 0, 113, _] => true,
+                // --- is_unspecified ---
+                [0, 0, 0, 0] => true,
+                _ => false,
+            }
         }
         IpAddr::V6(addr) => {
-            match addr.multicast_scope() {
-                Some(Ipv6MulticastScope::Global) => false,
-                None => {
-                    addr.is_multicast()
-                        || addr.is_loopback()
-                        || addr.is_unicast_link_local()
-                        || addr.is_unicast_site_local()
-                        || addr.is_unique_local()
-                        || addr.is_unspecified()
-                        || addr.is_documentation()
+            let segments = addr.segments();
+
+            let is_multicast = segments[0] & 0xff00 == 0xff00;
+
+            if is_multicast {
+                segments[0] & 0x000f != 14 // 14 means global
+            } else {
+                match segments {
+                    // --- is_loopback ---
+                    [0, 0, 0, 0, 0, 0, 0, 1] => true,
+                    // --- is_unspecified ---
+                    [0, 0, 0, 0, 0, 0, 0, 0] => true,
+                    _ => {
+                        match segments[0] & 0xffc0 {
+                            // --- is_unicast_link_local ---
+                            0xfe80 => true,
+                            // --- is_unicast_site_local ---
+                            0xfec0 => true,
+                            _ => {
+                                // --- is_unique_local ---
+                                if segments[0] & 0xfe00 == 0xfc00 {
+                                    true
+                                } else {
+                                    (segments[0] == 0x2001) && (segments[1] == 0xdb8)
+                                }
+                            }
+                        }
+                    }
                 }
-                _ => true,
             }
         }
     }
@@ -117,10 +148,11 @@ macro_rules! impl_request_guard {
     }
 }
 
-impl<'a, 'r> FromRequest<'a, 'r> for ClientAddr {
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for ClientAddr {
     type Error = ();
 
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
+    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         match impl_request_guard!(request) {
             Some(client_addr) => Outcome::Success(client_addr),
             None => Outcome::Forward(()),
@@ -128,10 +160,11 @@ impl<'a, 'r> FromRequest<'a, 'r> for ClientAddr {
     }
 }
 
-impl<'a, 'r> FromRequest<'a, 'r> for &'a ClientAddr {
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for &'r ClientAddr {
     type Error = ();
 
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
+    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         let cache: &Option<ClientAddr> = request.local_cache(|| impl_request_guard!(request));
 
         match cache.as_ref() {

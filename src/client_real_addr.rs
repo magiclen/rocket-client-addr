@@ -1,7 +1,7 @@
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
+use crate::rocket::outcome::Outcome;
 use crate::rocket::request::{self, FromRequest, Request};
-use crate::rocket::Outcome;
 
 /// The request guard used for getting an IP address from a client.
 #[derive(Debug, Clone)]
@@ -48,10 +48,11 @@ macro_rules! impl_request_guard {
     }
 }
 
-impl<'a, 'r> FromRequest<'a, 'r> for ClientRealAddr {
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for ClientRealAddr {
     type Error = ();
 
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
+    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         match impl_request_guard!(request) {
             Some(client_addr) => Outcome::Success(client_addr),
             None => Outcome::Forward(()),
@@ -59,10 +60,11 @@ impl<'a, 'r> FromRequest<'a, 'r> for ClientRealAddr {
     }
 }
 
-impl<'a, 'r> FromRequest<'a, 'r> for &'a ClientRealAddr {
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for &'r ClientRealAddr {
     type Error = ();
 
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
+    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         let cache: &Option<ClientRealAddr> = request.local_cache(|| impl_request_guard!(request));
 
         match cache.as_ref() {

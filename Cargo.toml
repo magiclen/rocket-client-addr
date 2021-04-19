@@ -1,6 +1,6 @@
 [package]
 name = "rocket-client-addr"
-version = "0.4.6"
+version = "0.5.0"
 authors = ["Magic Len <len@magiclen.org>"]
 edition = "2018"
 repository = "https://github.com/magiclen/rocket-client-addr"
@@ -17,4 +17,4 @@ repository = "magiclen/rocket-client-addr"
 branch = "master"
 
 [dependencies]
-rocket = "0.4.2"
+rocket = { git = "https://github.com/SergioBenitez/Rocket", version = "0.5.0-dev" }
