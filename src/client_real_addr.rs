@@ -10,38 +10,52 @@ pub struct ClientRealAddr {
     pub ip: IpAddr,
 }
 
-macro_rules! impl_request_guard {
-    ($request:ident) => {
-        {
-            match $request.real_ip() {
-                Some(ip) => Some(ClientRealAddr {
-                    ip
-                }),
-                None => {
-                    let forwarded_for_ip: Option<&str> = $request.headers().get("x-forwarded-for").next(); // Only fetch the first one.
+fn from_request(request: &Request<'_>) -> Option<ClientRealAddr> {
+    match request.real_ip() {
+        Some(ip) => {
+            Some(ClientRealAddr {
+                ip,
+            })
+        }
+        None => {
+            let forwarded_for_ip: Option<&str> = request.headers().get("x-forwarded-for").next(); // Only fetch the first one.
+
+            match forwarded_for_ip {
+                Some(forwarded_for_ip) => {
+                    let forwarded_for_ip = forwarded_for_ip.split(',').next(); // Only fetch the first one.
 
                     match forwarded_for_ip {
                         Some(forwarded_for_ip) => {
-                            let forwarded_for_ip = forwarded_for_ip.split(",").next(); // Only fetch the first one.
-
-                            match forwarded_for_ip {
-                                Some(forwarded_for_ip) => match forwarded_for_ip.trim().parse::<IpAddr>() {
-                                    Ok(ip) => Some(ClientRealAddr {
-                                        ip
-                                    }),
-                                    Err(_) => $request.remote().map(|addr| ClientRealAddr {
-                                        ip: addr.ip()
+                            match forwarded_for_ip.trim().parse::<IpAddr>() {
+                                Ok(ip) => {
+                                    Some(ClientRealAddr {
+                                        ip,
                                     })
-                                },
-                                None => $request.remote().map(|addr| ClientRealAddr {
-                                    ip: addr.ip()
-                                })
+                                }
+                                Err(_) => {
+                                    request.remote().map(|addr| {
+                                        ClientRealAddr {
+                                            ip: addr.ip(),
+                                        }
+                                    })
+                                }
                             }
                         }
-                        None => $request.remote().map(|addr| ClientRealAddr {
-                            ip: addr.ip()
-                        })
+                        None => {
+                            request.remote().map(|addr| {
+                                ClientRealAddr {
+                                    ip: addr.ip(),
+                                }
+                            })
+                        }
                     }
+                }
+                None => {
+                    request.remote().map(|addr| {
+                        ClientRealAddr {
+                            ip: addr.ip(),
+                        }
+                    })
                 }
             }
         }
@@ -53,7 +67,7 @@ impl<'r> FromRequest<'r> for ClientRealAddr {
     type Error = ();
 
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        match impl_request_guard!(request) {
+        match from_request(request) {
             Some(client_addr) => Outcome::Success(client_addr),
             None => Outcome::Forward(()),
         }
@@ -65,7 +79,7 @@ impl<'r> FromRequest<'r> for &'r ClientRealAddr {
     type Error = ();
 
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        let cache: &Option<ClientRealAddr> = request.local_cache(|| impl_request_guard!(request));
+        let cache: &Option<ClientRealAddr> = request.local_cache(|| from_request(request));
 
         match cache.as_ref() {
             Some(client_addr) => Outcome::Success(client_addr),
