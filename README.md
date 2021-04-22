@@ -1,7 +1,7 @@
 Client's IP Address Request Guard for Rocket Framework
 ====================
 
-[![Build Status](https://travis-ci.org/magiclen/rocket-client-addr.svg?branch=master)](https://travis-ci.org/magiclen/rocket-client-addr)
+[![CI](https://github.com/magiclen/rocket-client-addr/actions/workflows/ci.yml/badge.svg)](https://github.com/magiclen/rocket-client-addr/actions/workflows/ci.yml)
 
 This crate provides two request guards used for getting an IP address from a client.
 
