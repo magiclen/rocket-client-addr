@@ -29,6 +29,6 @@ jobs:
           profile: minimal
           toolchain: ${{ matrix.toolchain }}
           override: true
-      - run: cargo build --release
+      - run: cargo build --examples --release
       - run: cargo test --release
       - run: cargo doc --release
