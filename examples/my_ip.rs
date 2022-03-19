@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate rocket;
 
-extern crate rocket_client_addr;
-
 use rocket_client_addr::ClientAddr;
 
 #[get("/ipv4")]

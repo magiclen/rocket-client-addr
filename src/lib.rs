@@ -6,8 +6,6 @@ This crate provides two request guards used for getting an IP address from a cli
 See `examples`.
 */
 
-extern crate rocket;
-
 mod client_addr;
 mod client_real_addr;
 

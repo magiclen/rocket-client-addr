@@ -1,7 +1,7 @@
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
-use crate::rocket::outcome::Outcome;
-use crate::rocket::request::{self, FromRequest, Request};
+use rocket::outcome::Outcome;
+use rocket::request::{self, FromRequest, Request};
 
 /// The request guard used for getting an IP address from a client.
 #[derive(Debug, Clone)]
