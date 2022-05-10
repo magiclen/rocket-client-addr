@@ -1,6 +1,6 @@
 [package]
 name = "rocket-client-addr"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Magic Len <len@magiclen.org>"]
 edition = "2021"
 repository = "https://github.com/magiclen/rocket-client-addr"
@@ -13,4 +13,4 @@ license = "MIT"
 include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 
 [dependencies]
-rocket = "0.5.0-rc.1"
+rocket = "0.5.0-rc.2"
