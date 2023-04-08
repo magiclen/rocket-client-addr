@@ -1,7 +1,9 @@
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
-use rocket::outcome::Outcome;
-use rocket::request::{self, FromRequest, Request};
+use rocket::{
+    outcome::Outcome,
+    request::{self, FromRequest, Request},
+};
 
 /// The request guard used for getting an IP address from a client.
 #[derive(Debug, Clone)]
@@ -34,14 +36,14 @@ fn is_local_ip(addr: &IpAddr) -> bool {
                 [0, 0, 0, 0] => true,
                 _ => false,
             }
-        }
+        },
         IpAddr::V6(addr) => {
             let segments = addr.segments();
 
-            let is_multicast = segments[0] & 0xff00 == 0xff00;
+            let is_multicast = segments[0] & 0xFF00 == 0xFF00;
 
             if is_multicast {
-                segments[0] & 0x000f != 14 // 14 means global
+                segments[0] & 0x000F != 14 // 14 means global
             } else {
                 match segments {
                     // --- is_loopback ---
@@ -49,24 +51,24 @@ fn is_local_ip(addr: &IpAddr) -> bool {
                     // --- is_unspecified ---
                     [0, 0, 0, 0, 0, 0, 0, 0] => true,
                     _ => {
-                        match segments[0] & 0xffc0 {
+                        match segments[0] & 0xFFC0 {
                             // --- is_unicast_link_local ---
-                            0xfe80 => true,
+                            0xFE80 => true,
                             // --- is_unicast_site_local ---
-                            0xfec0 => true,
+                            0xFEC0 => true,
                             _ => {
                                 // --- is_unique_local ---
-                                if segments[0] & 0xfe00 == 0xfc00 {
+                                if segments[0] & 0xFE00 == 0xFC00 {
                                     true
                                 } else {
-                                    (segments[0] == 0x2001) && (segments[1] == 0xdb8)
+                                    (segments[0] == 0x2001) && (segments[1] == 0xDB8)
                                 }
-                            }
+                            },
                         }
-                    }
+                    },
                 }
             }
-        }
+        },
     }
 }
 
@@ -78,17 +80,15 @@ fn from_request(request: &Request<'_>) -> Option<ClientAddr> {
             let ok = !is_local_ip(&ip);
 
             (Some(ip), ok)
-        }
+        },
         None => (None, false),
     };
 
     if ok {
         match remote_ip {
-            Some(ip) => {
-                Some(ClientAddr {
-                    ip,
-                })
-            }
+            Some(ip) => Some(ClientAddr {
+                ip,
+            }),
             None => unreachable!(),
         }
     } else {
@@ -108,53 +108,35 @@ fn from_request(request: &Request<'_>) -> Option<ClientAddr> {
                             if !is_local_ip(&ip) {
                                 break;
                             }
-                        }
+                        },
                         Err(_) => {
                             break;
-                        }
+                        },
                     }
                 }
 
                 match last_ip {
-                    Some(ip) => {
-                        Some(ClientAddr {
+                    Some(ip) => Some(ClientAddr {
+                        ip,
+                    }),
+                    None => match request.real_ip() {
+                        Some(real_ip) => Some(ClientAddr {
+                            ip: real_ip
+                        }),
+                        None => remote_ip.map(|ip| ClientAddr {
                             ip,
-                        })
-                    }
-                    None => {
-                        match request.real_ip() {
-                            Some(real_ip) => {
-                                Some(ClientAddr {
-                                    ip: real_ip,
-                                })
-                            }
-                            None => {
-                                remote_ip.map(|ip| {
-                                    ClientAddr {
-                                        ip,
-                                    }
-                                })
-                            }
-                        }
-                    }
+                        }),
+                    },
                 }
-            }
-            None => {
-                match request.real_ip() {
-                    Some(real_ip) => {
-                        Some(ClientAddr {
-                            ip: real_ip,
-                        })
-                    }
-                    None => {
-                        remote_ip.map(|ip| {
-                            ClientAddr {
-                                ip,
-                            }
-                        })
-                    }
-                }
-            }
+            },
+            None => match request.real_ip() {
+                Some(real_ip) => Some(ClientAddr {
+                    ip: real_ip
+                }),
+                None => remote_ip.map(|ip| ClientAddr {
+                    ip,
+                }),
+            },
         }
     }
 }
