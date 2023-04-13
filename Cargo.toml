@@ -9,7 +9,6 @@ homepage = "https://magiclen.org/rocket-client-addr"
 keywords = ["rocket", "server", "web", "ip", "http"]
 categories = ["web-programming"]
 description = "This crate provides two request guards used for getting an IP address from a client."
-readme = "README.md"
 license = "MIT"
 include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 
