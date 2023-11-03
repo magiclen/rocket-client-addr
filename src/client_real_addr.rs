@@ -1,6 +1,7 @@
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use rocket::{
+    http::Status,
     outcome::Outcome,
     request::{self, FromRequest, Request},
 };
@@ -53,7 +54,7 @@ impl<'r> FromRequest<'r> for ClientRealAddr {
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         match from_request(request) {
             Some(client_addr) => Outcome::Success(client_addr),
-            None => Outcome::Forward(()),
+            None => Outcome::Forward(Status::BadRequest),
         }
     }
 }
@@ -67,7 +68,7 @@ impl<'r> FromRequest<'r> for &'r ClientRealAddr {
 
         match cache.as_ref() {
             Some(client_addr) => Outcome::Success(client_addr),
-            None => Outcome::Forward(()),
+            None => Outcome::Forward(Status::BadRequest),
         }
     }
 }
