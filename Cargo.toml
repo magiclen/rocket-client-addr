@@ -1,16 +1,21 @@
 [package]
 name = "rocket-client-addr"
-version = "0.5.4"
+version = "0.6.0"
 authors = ["Magic Len <len@magiclen.org>"]
 edition = "2024"
 rust-version = "1.88"
 repository = "https://github.com/magiclen/rocket-client-addr"
 homepage = "https://magiclen.org/rocket-client-addr"
-keywords = ["rocket", "server", "web", "ip", "http"]
+keywords = ["rocket", "proxy", "client", "ip", "http"]
 categories = ["web-programming"]
-description = "This crate provides two request guards used for getting an IP address from a client."
+description = "Resolve client IP addresses in `rocket` from trusted proxy headers with safe socket fallback."
 license = "MIT"
 include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 
 [dependencies]
 rocket = "0.5"
+cidr = "0.3"
+cidr-utils = { version = "0.7", default-features = false, features = ["combiner"] }
+
+[dev-dependencies]
+governor = "0.10.4"
