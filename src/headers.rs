@@ -33,7 +33,8 @@ pub(crate) fn configured_client_ip_header(
     headers: &HeaderMap<'_>,
     header: &Uncased<'_>,
 ) -> Option<IpAddr> {
-    let raw = header_lines(headers, header).pop()?;
+    // Only one line is wanted here, so the lines are walked instead of collected.
+    let raw = headers.get(header.as_str()).last()?;
 
     if !is_visible_ascii(raw) {
         return None;
